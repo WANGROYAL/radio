@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>网络收音机 - 全球流媒体电台播放器</title>
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(145deg, #121826 0%, #1a1f2c 100%);
+            min-height: 100vh;
+            color: #eef4ff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(18, 24, 38, 0.75);
+            backdrop-filter: blur(2px);
+            border-radius: 2rem;
+            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .header {
+            background: rgba(10, 14, 23, 0.8);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header h1 {
+            font-size: 1.9rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #D9E2FF, #7C93FF);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header h1 i {
+            background: none;
+            color: #7C93FF;
+            -webkit-background-clip: unset;
+            font-size: 1.8rem;
+        }
+
+        .sub {
+            color: #9aa4bf;
+            margin-top: 8px;
+            font-size: 0.9rem;
+        }
+
+        .developer-sign {
+            margin-top: 6px;
+            font-size: 0.8rem;
+            color: #b7c0e0;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .two-columns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            padding: 24px 28px;
+        }
+
+        .stations-panel {
+            flex: 2;
+            min-width: 260px;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 1.5rem;
+            backdrop-filter: blur(4px);
+            padding: 0 0 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .view-tabs {
+            display: flex;
+            gap: 10px;
+            padding: 10px 20px 6px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .view-tab {
+            background: transparent;
+            border: 1px solid #2e3a55;
+            color: #cbd0e6;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .view-tab.active {
+            background: #2c3d62;
+            border-color: #7C93FF;
+            color: white;
+            box-shadow: 0 0 8px rgba(124, 147, 255, 0.3);
+        }
+
+        .search-area {
+            padding: 12px 20px 8px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .search-box {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .search-box input {
+            flex: 1;
+            background: #1e2538;
+            border: 1px solid #2e3a55;
+            padding: 12px 18px;
+            border-radius: 60px;
+            font-size: 1rem;
+            color: #f0f3ff;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .search-box input:focus {
+            border-color: #7C93FF;
+            box-shadow: 0 0 0 2px rgba(124, 147, 255, 0.3);
+        }
+
+        .search-box button {
+            background: #2a3a60;
+            border: none;
+            padding: 0 22px;
+            border-radius: 60px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+            transition: 0.2s;
+        }
+
+        .search-box button:hover {
+            background: #3e4f7c;
+            transform: scale(0.97);
+        }
+
+        .search-info {
+            font-size: 0.75rem;
+            color: #9aa4bf;
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .stations-list {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 520px;
+            padding: 8px 12px;
+        }
+
+        .station-card {
+            background: rgba(30, 36, 56, 0.6);
+            margin-bottom: 12px;
+            border-radius: 1.2rem;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            transition: 0.15s linear;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(2px);
+        }
+
+        .station-card:hover {
+            background: rgba(48, 58, 88, 0.8);
+            border-color: rgba(124, 147, 255, 0.3);
+            transform: translateX(2px);
+        }
+
+        .station-info {
+            flex: 3;
+            min-width: 150px;
+        }
+
+        .station-name {
+            font-weight: 700;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .station-name i {
+            color: #7C93FF;
+            font-size: 0.85rem;
+        }
+
+        .station-meta {
+            font-size: 0.7rem;
+            color: #b9c2dd;
+            margin-top: 5px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .station-tags {
+            background: #1f2a40;
+            padding: 2px 8px;
+            border-radius: 30px;
+            font-size: 0.65rem;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .play-btn, .fav-btn {
+            border: none;
+            color: white;
+            width: 44px;
+            height: 44px;
+            border-radius: 40px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .play-btn {
+            background: #2c3d62;
+        }
+
+        .play-btn:hover {
+            background: #7C93FF;
+            transform: scale(1.05);
+            box-shadow: 0 4px 10px rgba(124, 147, 255, 0.4);
+        }
+
+        .fav-btn {
+            background: rgba(255, 255, 255, 0.08);
+            width: 40px;
+            height: 40px;
+            font-size: 1rem;
+        }
+
+        .fav-btn:hover {
+            background: #ff4d6d;
+            color: white;
+        }
+
+        .fav-btn.favorited {
+            color: #ff4d6d;
+        }
+
+        .control-panel {
+            flex: 1.2;
+            min-width: 280px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 1.5rem;
+            backdrop-filter: blur(6px);
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        .now-playing {
+            background: #0f1422cc;
+            border-radius: 1.2rem;
+            padding: 18px;
+            text-align: center;
+        }
+
+        .now-playing h3 {
+            font-size: 0.9rem;
+            font-weight: 400;
+            letter-spacing: 1px;
+            color: #9aa8df;
+        }
+
+        .current-station-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin: 12px 0 6px;
+            word-break: break-word;
+            color: #EFF3FF;
+        }
+
+        .player-controls {
+            display: flex;
+            justify-content: center;
+            gap: 28px;
+            margin: 8px 0;
+        }
+
+        .ctrl-btn {
+            background: #232b42;
+            border: none;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            color: white;
+            cursor: pointer;
+            transition: 0.15s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ctrl-btn:active {
+            transform: scale(0.94);
+        }
+
+        .ctrl-btn:hover {
+            background: #7C93FF;
+        }
+
+        .volume-slider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #1a1f2e;
+            padding: 8px 14px;
+            border-radius: 60px;
+        }
+
+        .volume-slider i {
+            font-size: 1.2rem;
+            width: 28px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 4px;
+            -webkit-appearance: none;
+            background: #3e4b6b;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: #7C93FF;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 4px #7C93FF;
+        }
+
+        .enhance-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #1a1f2e;
+            padding: 10px 16px;
+            border-radius: 60px;
+            font-size: 0.9rem;
+        }
+
+        .enhance-toggle button {
+            background: #2c3d62;
+            border: none;
+            color: white;
+            padding: 6px 18px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: 600;
+        }
+
+        .enhance-toggle button.active {
+            background: #7C93FF;
+            box-shadow: 0 0 12px rgba(124, 147, 255, 0.5);
+        }
+
+        .manual-url {
+            margin-top: 8px;
+        }
+
+        .manual-url label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .url-input-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .url-input-group input {
+            flex: 2;
+            background: #1e2538;
+            border: 1px solid #2e3a55;
+            padding: 10px 14px;
+            border-radius: 60px;
+            color: white;
+            font-size: 0.85rem;
+        }
+
+        .url-input-group button {
+            background: #2c3d62;
+            border: none;
+            padding: 0 20px;
+            border-radius: 60px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .url-input-group button:hover {
+            background: #7C93FF;
+        }
+
+        .status-msg {
+            font-size: 0.75rem;
+            background: #00000055;
+            padding: 6px 12px;
+            border-radius: 40px;
+            text-align: center;
+            margin-top: 12px;
+        }
+
+        .loading-indicator {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid #7C93FF;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 6px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e2538;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4a5b85;
+            border-radius: 10px;
+        }
+
+        footer {
+            padding: 14px 28px;
+            text-align: center;
+            font-size: 0.7rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            color: #6f7a9e;
+        }
+
+        @media (max-width: 800px) {
+            .two-columns {
+                padding: 16px;
+                gap: 18px;
+            }
+            .station-name {
+                font-size: 0.9rem;
+            }
+            .ctrl-btn {
+                width: 44px;
+                height: 44px;
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1><i class="fas fa-satellite-dish"></i> 网络收音机 · 流媒体探索家</h1>
+        <div class="sub"><i class="fas fa-globe"></i> 全球数万电台 | 实时搜索 | 一键收听</div>
+        <div class="developer-sign"><i class="fas fa-code"></i> 本程式由王秋生达人开发</div>
+    </div>
+
+    <div class="two-columns">
+        <!-- 左侧搜索和电台列表 -->
+        <div class="stations-panel">
+            <div class="view-tabs">
+                <button class="view-tab active" id="searchTabBtn"><i class="fas fa-search"></i> 搜索电台</button>
+                <button class="view-tab" id="favoritesTabBtn"><i class="fas fa-heart"></i> 我的收藏</button>
+                <button class="view-tab" id="exportFavBtn" style="margin-left:auto;" title="导出收藏为TXT文件"><i class="fas fa-download"></i> 导出</button>
+            </div>
+            <div class="search-area" id="searchArea">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="输入电台名或风格，如：华语、经典、新闻" value="华语">
+                    <button id="searchBtn"><i class="fas fa-search"></i> 搜索电台</button>
+                </div>
+                <div class="search-info">
+                    <span><i class="fas fa-database"></i> 数据源: Radio-Browser.info</span>
+                    <span id="resultCount"></span>
+                </div>
+            </div>
+            <div class="stations-list" id="stationsList">
+                <div style="text-align:center; padding: 40px;"><i class="fas fa-spinner fa-pulse"></i> 加载推荐电台...</div>
+            </div>
+        </div>
+
+        <!-- 右侧播放控制区 + 手动流媒体 -->
+        <div class="control-panel">
+            <div class="now-playing">
+                <h3><i class="fas fa-headphones"></i> 当前播放</h3>
+                <div class="current-station-name" id="currentStationName">未播放</div>
+                <div id="playStatusText" style="font-size: 0.7rem; color: #a6b3e0;"><i class="fas fa-circle-notch"></i> 就绪</div>
+            </div>
+            <div class="player-controls">
+                <button class="ctrl-btn" id="playPauseBtn" title="播放/暂停"><i class="fas fa-play"></i></button>
+                <button class="ctrl-btn" id="stopBtn" title="停止"><i class="fas fa-stop"></i></button>
+            </div>
+            <div class="volume-slider">
+                <i class="fas fa-volume-down"></i>
+                <input type="range" id="volumeControl" min="0" max="1" step="0.01" value="0.7">
+                <i class="fas fa-volume-up"></i>
+            </div>
+            <div class="enhance-toggle">
+                <span><i class="fas fa-sliders-h"></i> 超重低音立体场</span>
+                <button id="enhanceToggleBtn">关闭</button>
+            </div>
+            <div class="manual-url">
+                <label><i class="fas fa-link"></i> 手动添加流媒体URL (MP3/AAC/OGG等)</label>
+                <div class="url-input-group">
+                    <input type="text" id="manualUrl" placeholder="例如: https://stream.somafm.com/groovesalad256.mp3">
+                    <button id="playManualBtn"><i class="fas fa-play-circle"></i> 播放</button>
+                </div>
+                <div class="status-msg" id="statusMsg">
+                    <i class="fas fa-info-circle"></i> 点击电台列表中的 ▶ 按钮即可收听
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer>
+        <i class="fas fa-radio"></i> 基于社区电台目录 | 支持搜索全球广播流 | 流媒体直接播放
+    </footer>
+</div>
+
+<script>
+    (function() {
+        // ---------- 全局元素 ----------
+        const audioPlayer = new Audio();
+        let currentStation = null;          // 存储当前电台对象
+        let isPlayingFlag = false;
+
+        // DOM 元素
+        const stationsListDiv = document.getElementById('stationsList');
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const searchArea = document.getElementById('searchArea');
+        const currentStationNameSpan = document.getElementById('currentStationName');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const volumeControl = document.getElementById('volumeControl');
+        const playManualBtn = document.getElementById('playManualBtn');
+        const manualUrlInput = document.getElementById('manualUrl');
+        const statusMsgDiv = document.getElementById('statusMsg');
+        const playStatusText = document.getElementById('playStatusText');
+        const resultCountSpan = document.getElementById('resultCount');
+        const searchTabBtn = document.getElementById('searchTabBtn');
+        const favoritesTabBtn = document.getElementById('favoritesTabBtn');
+        const exportFavBtn = document.getElementById('exportFavBtn');
+        const enhanceToggleBtn = document.getElementById('enhanceToggleBtn');
+
+        // 当前视图状态 'search' 或 'favorites'
+        let currentView = 'search';
+        // 当前显示的电台数组（用于收藏操作）
+        let currentDisplayedStations = [];
+
+        // 音效相关
+        let audioCtx = null;
+        let sourceNode = null;
+        let bassFilter = null;
+        let stereoNodes = {}; // splitter, merger, leftDelay, rightDelay, leftGain, rightGain
+        let enhanceActive = false;       // 增强链是否已成功建立
+        let userWantsEnhance = false;    // 用户是否打开了增强开关
+
+        // 初始化音量
+        audioPlayer.volume = volumeControl.value;
+
+        // ===================== 辅助函数 =====================
+        function setStatusMessage(msg, isError = false) {
+            statusMsgDiv.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-info-circle'}"></i> ${msg}`;
+            if(isError) {
+                setTimeout(() => {
+                    if(statusMsgDiv.innerHTML.includes(msg)) 
+                        statusMsgDiv.innerHTML = `<i class="fas fa-info-circle"></i> 就绪，可继续搜索或播放`;
+                }, 4000);
+            }
+        }
+
+        function updatePlayStatusText(text, isLoading = false) {
+            if(isLoading) {
+                playStatusText.innerHTML = `<span class="loading-indicator"></span> ${text}`;
+            } else {
+                playStatusText.innerHTML = `<i class="fas fa-music"></i> ${text}`;
+            }
+        }
+
+        function updatePlayPauseButtonIcon(isPlaying) {
+            playPauseBtn.innerHTML = isPlaying ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
+        }
+
+        function stopPlayback(resetDisplay = true) {
+            audioPlayer.pause();
+            audioPlayer.src = '';
+            audioPlayer.load();
+            isPlayingFlag = false;
+            updatePlayPauseButtonIcon(false);
+            updatePlayStatusText('已停止', false);
+            if(resetDisplay && currentStation) {
+                currentStationNameSpan.innerText = currentStation.name || "已停止";
+            } else if(resetDisplay) {
+                currentStationNameSpan.innerText = "未播放";
+            }
+        }
+
+        // 转义HTML
+        function escapeHtml(str) {
+            if(!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if(m === '&') return '&amp;';
+                if(m === '<') return '&lt;';
+                if(m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        // ===================== 音效增强模块 =====================
+        function setupEnhanceChain() {
+            if (enhanceActive) return true; // 已经建立
+            try {
+                // 创建AudioContext (用户手势后调用)
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                // 关键：设置跨域属性以允许createMediaElementSource
+                audioPlayer.crossOrigin = "anonymous";
+                sourceNode = audioCtx.createMediaElementSource(audioPlayer);
+                
+                // 低音增强滤波器
+                bassFilter = audioCtx.createBiquadFilter();
+                bassFilter.type = "lowshelf";
+                bassFilter.frequency.value = 80;
+                bassFilter.gain.value = 10; // +10dB 超重低音
+
+                // 立体声扩展链：声道分离 -> 微小延迟差 -> 混合
+                const splitter = audioCtx.createChannelSplitter(2);
+                const merger = audioCtx.createChannelMerger(2);
+                const leftDelay = audioCtx.createDelay(0.01);
+                const rightDelay = audioCtx.createDelay(0.01);
+                leftDelay.delayTime.value = 0.005;
+                rightDelay.delayTime.value = 0.012;
+                const leftGain = audioCtx.createGain();
+                const rightGain = audioCtx.createGain();
+                leftGain.gain.value = 0.9;
+                rightGain.gain.value = 0.9;
+
+                // 连接：source -> bassFilter -> splitter
+                sourceNode.connect(bassFilter);
+                bassFilter.connect(splitter);
+                // 左声道 -> leftDelay -> leftGain -> merger (input 0)
+                splitter.connect(leftDelay, 0);
+                leftDelay.connect(leftGain).connect(merger, 0, 0);
+                // 右声道 -> rightDelay -> rightGain -> merger (input 1)
+                splitter.connect(rightDelay, 1);
+                rightDelay.connect(rightGain).connect(merger, 0, 1);
+                // merger -> 扬声器
+                merger.connect(audioCtx.destination);
+
+                stereoNodes = { splitter, merger, leftDelay, rightDelay, leftGain, rightGain };
+                enhanceActive = true;
+                console.log('音效增强链已建立');
+                return true;
+            } catch (e) {
+                console.error('建立音效增强失败：', e);
+                // 清理失败资源
+                if (sourceNode) { sourceNode.disconnect(); sourceNode = null; }
+                if (bassFilter) { bassFilter.disconnect(); bassFilter = null; }
+                stereoNodes = {};
+                // 重置crossOrigin可能影响后续播放，但别无选择；若失败则还原
+                audioPlayer.crossOrigin = null;
+                enhanceActive = false;
+                return false;
+            }
+        }
+
+        function applyEnhanceParams(enable) {
+            if (!enhanceActive) return;
+            if (enable) {
+                if (bassFilter) bassFilter.gain.value = 10;
+                if (stereoNodes.leftDelay) {
+                    stereoNodes.leftDelay.delayTime.value = 0.005;
+                    stereoNodes.rightDelay.delayTime.value = 0.012;
+                }
+                if (stereoNodes.leftGain) {
+                    stereoNodes.leftGain.gain.value = 0.9;
+                    stereoNodes.rightGain.gain.value = 0.9;
+                }
+            } else {
+                // 关闭增强：低音归零，延迟差归零，增益不变但声场正常
+                if (bassFilter) bassFilter.gain.value = 0;
+                if (stereoNodes.leftDelay) {
+                    stereoNodes.leftDelay.delayTime.value = 0;
+                    stereoNodes.rightDelay.delayTime.value = 0;
+                }
+            }
+        }
+
+        function toggleEnhanceUI(active) {
+            if (active) {
+                enhanceToggleBtn.textContent = '开启';
+                enhanceToggleBtn.classList.add('active');
+            } else {
+                enhanceToggleBtn.textContent = '关闭';
+                enhanceToggleBtn.classList.remove('active');
+            }
+        }
+
+        async function handleEnhanceToggle() {
+            if (userWantsEnhance) {
+                // 用户意图关闭增强
+                userWantsEnhance = false;
+                applyEnhanceParams(false);
+                toggleEnhanceUI(false);
+                setStatusMessage('超重低音效果已关闭', false);
+            } else {
+                // 用户意图开启增强
+                userWantsEnhance = true;
+                if (!enhanceActive) {
+                    // 需要建立增强链，可能需要用户手势，这里已经在点击事件中
+                    // 如果当前有电台在播放，提示会短暂中断
+                    const hadStation = currentStation ? true : false;
+                    if (hadStation) {
+                        updatePlayStatusText('正在启用音效...', true);
+                    }
+                    const success = setupEnhanceChain();
+                    if (success) {
+                        applyEnhanceParams(true);
+                        toggleEnhanceUI(true);
+                        setStatusMessage('✨ 超重低音立体场已激活', false);
+                        // 如果之前有播放，声音链已自动接管，无需重新播放
+                        if (hadStation) {
+                            // 音频输出已经切换到增强链，可能需调整volume
+                            audioPlayer.volume = volumeControl.value;
+                            updatePlayStatusText('播放中 (增强)', false);
+                        }
+                    } else {
+                        userWantsEnhance = false;
+                        toggleEnhanceUI(false);
+                        setStatusMessage('⚠️ 音效启用失败，可能受CORS限制或不支持该流', true);
+                    }
+                } else {
+                    // 链已存在，直接开启参数
+                    applyEnhanceParams(true);
+                    toggleEnhanceUI(true);
+                    setStatusMessage('✨ 超重低音立体场已激活', false);
+                }
+            }
+        }
+
+        enhanceToggleBtn.addEventListener('click', handleEnhanceToggle);
+
+        // ===================== 播放控制 =====================
+        function playStation(station) {
+            if (!station || !station.url) {
+                setStatusMessage("无效的流媒体地址", true);
+                return false;
+            }
+            stopPlayback(false); // 停止当前流但不完全清除显示
+            // 设置新源
+            audioPlayer.src = station.url;
+            currentStation = {
+                name: station.name || "手动流媒体",
+                url: station.url,
+                tags: station.tags || "",
+                country: station.country || "",
+                bitrate: station.bitrate || "",
+                codec: station.codec || ""
+            };
+            currentStationNameSpan.innerText = currentStation.name;
+
+            // 如果已开启增强，确保链已建立（可能因之前失败而未建立）
+            if (userWantsEnhance && !enhanceActive) {
+                const ok = setupEnhanceChain();
+                if (ok) {
+                    applyEnhanceParams(true);
+                } else {
+                    userWantsEnhance = false;
+                    toggleEnhanceUI(false);
+                }
+            }
+
+            // 播放
+            const playPromise = audioPlayer.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    isPlayingFlag = true;
+                    updatePlayPauseButtonIcon(true);
+                    updatePlayStatusText(`正在播放: ${currentStation.name}`, false);
+                    setStatusMessage(`✓ 正在播放 "${currentStation.name}"`, false);
+                }).catch(error => {
+                    console.error("播放失败: ", error);
+                    isPlayingFlag = false;
+                    updatePlayPauseButtonIcon(false);
+                    let errMsg = "无法播放流，可能是链接失效或格式不支持";
+                    if (error.name === "NotAllowedError") errMsg = "需要用户手势才能自动播放，请点击播放按钮重试";
+                    else if (error.name === "NotSupportedError") errMsg = "音频格式不支持或CORS问题";
+                    updatePlayStatusText(`播放失败: ${errMsg.slice(0,40)}`, false);
+                    setStatusMessage(`${errMsg} 尝试其他电台`, true);
+                    currentStationNameSpan.innerText = currentStation.name + " (失败)";
+                    audioPlayer.src = '';
+                    currentStation = null;
+                });
+            }
+            return true;
+        }
+
+        function togglePlayPause() {
+            if (!audioPlayer.src || audioPlayer.src === '') {
+                setStatusMessage("没有正在播放的电台，请先选择一个电台", true);
+                return;
+            }
+            if (audioPlayer.paused) {
+                audioPlayer.play().then(() => {
+                    isPlayingFlag = true;
+                    updatePlayPauseButtonIcon(true);
+                    updatePlayStatusText(`播放中: ${currentStation?.name || "流媒体"}`, false);
+                }).catch(e => {
+                    setStatusMessage("恢复播放失败: " + e.message, true);
+                });
+            } else {
+                audioPlayer.pause();
+                isPlayingFlag = false;
+                updatePlayPauseButtonIcon(false);
+                updatePlayStatusText("已暂停", false);
+            }
+        }
+
+        function playManualUrl() {
+            let url = manualUrlInput.value.trim();
+            if (!url) {
+                setStatusMessage("请输入有效的流媒体URL (http/https)", true);
+                return;
+            }
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                setStatusMessage("URL必须以 http:// 或 https:// 开头", true);
+                return;
+            }
+            const stationObj = {
+                name: "手动添加: " + (url.length > 50 ? url.substring(0,50)+"..." : url),
+                url: url,
+                tags: "custom",
+                country: "自定义"
+            };
+            playStation(stationObj);
+        }
+
+        volumeControl.addEventListener('input', (e) => {
+            audioPlayer.volume = e.target.value;
+        });
+
+        playPauseBtn.addEventListener('click', togglePlayPause);
+        stopBtn.addEventListener('click', () => {
+            if(audioPlayer.src) {
+                stopPlayback(true);
+                if(currentStation) {
+                    currentStationNameSpan.innerText = (currentStation?.name || "电台") + " (已停止)";
+                } else {
+                    currentStationNameSpan.innerText = "未播放";
+                }
+                setStatusMessage("播放已停止", false);
+            } else {
+                setStatusMessage("当前无活跃流", false);
+            }
+        });
+        playManualBtn.addEventListener('click', playManualUrl);
+
+        // 音频事件
+        audioPlayer.addEventListener('error', (e) => {
+            console.warn("Audio error", e);
+            if(audioPlayer.error) {
+                let code = audioPlayer.error.code;
+                let msg = code === 4 ? "流媒体地址无效或不可用" : "播放错误，请尝试其他电台";
+                // 如果是CORS相关且增强开启，尝试提示
+                if (userWantsEnhance && code === 4) {
+                    msg += " (音效增强可能受限)";
+                }
+                updatePlayStatusText(msg, false);
+                setStatusMessage(msg, true);
+                isPlayingFlag = false;
+                updatePlayPauseButtonIcon(false);
+                if(currentStation) {
+                    currentStationNameSpan.innerText = currentStation.name + " (错误)";
+                }
+                audioPlayer.pause();
+            }
+        });
+
+        audioPlayer.addEventListener('playing', () => {
+            isPlayingFlag = true;
+            updatePlayPauseButtonIcon(true);
+            if(currentStation) updatePlayStatusText(`流畅播放: ${currentStation.name}`, false);
+        });
+        audioPlayer.addEventListener('pause', () => {
+            isPlayingFlag = false;
+            updatePlayPauseButtonIcon(false);
+            if(!audioPlayer.src) return;
+            updatePlayStatusText("已暂停", false);
+        });
+        audioPlayer.addEventListener('waiting', () => {
+            updatePlayStatusText("缓冲中...", true);
+        });
+        audioPlayer.addEventListener('canplay', () => {
+            if(isPlayingFlag) updatePlayStatusText(`播放中`, false);
+        });
+
+        // ===================== 收藏功能 (localStorage) =====================
+        const FAVORITES_KEY = 'radio_favorites_v1';
+
+        function getFavorites() {
+            try {
+                const data = localStorage.getItem(FAVORITES_KEY);
+                return data ? JSON.parse(data) : [];
+            } catch(e) { return []; }
+        }
+
+        function saveFavorites(favs) {
+            localStorage.setItem(FAVORITES_KEY, JSON.stringify(favs));
+        }
+
+        function isFavoriteUrl(url) {
+            const favs = getFavorites();
+            return favs.some(f => f.url === url);
+        }
+
+        function addFavorite(station) {
+            const favs = getFavorites();
+            if (favs.some(f => f.url === station.url)) return false;
+            // 保存关键字段
+            favs.push({
+                name: station.name,
+                url: station.url,
+                country: station.country || '',
+                tags: station.tags || '',
+                bitrate: station.bitrate || '',
+                codec: station.codec || ''
+            });
+            saveFavorites(favs);
+            return true;
+        }
+
+        function removeFavorite(url) {
+            let favs = getFavorites();
+            const newFavs = favs.filter(f => f.url !== url);
+            if(newFavs.length === favs.length) return false;
+            saveFavorites(newFavs);
+            return true;
+        }
+
+        function toggleFavorite(station, buttonElement) {
+            if (isFavoriteUrl(station.url)) {
+                removeFavorite(station.url);
+                if (buttonElement) {
+                    buttonElement.classList.remove('favorited');
+                    buttonElement.innerHTML = '<i class="far fa-heart"></i>';
+                }
+                // 如果当前在收藏视图，移除后刷新列表
+                if (currentView === 'favorites') {
+                    renderFavoriteStations();
+                }
+            } else {
+                addFavorite(station);
+                if (buttonElement) {
+                    buttonElement.classList.add('favorited');
+                    buttonElement.innerHTML = '<i class="fas fa-heart"></i>';
+                }
+            }
+        }
+
+        // 导出收藏为TXT文件
+        function exportFavoritesAsTxt() {
+            const favs = getFavorites();
+            if (favs.length === 0) {
+                alert('收藏列表为空，无法导出。');
+                return;
+            }
+            let content = '印记收音机 V1 - 收藏电台列表\n';
+            content += '================================\n';
+            favs.forEach((f, idx) => {
+                content += `${idx+1}. ${f.name}\n   URL: ${f.url}\n   地区: ${f.country || '未知'}\n   标签: ${f.tags || '无'}\n\n`;
+            });
+            const blob = new Blob([content], {type: 'text/plain;charset=utf-8'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '印记收音机V1.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+            setStatusMessage('📄 收藏电台已导出为TXT文件', false);
+        }
+
+        exportFavBtn.addEventListener('click', exportFavoritesAsTxt);
+
+        // ===================== 电台搜索与渲染 =====================
+        const API_BASE = "https://de1.api.radio-browser.info/json/stations/search";
+
+        async function searchStations(query) {
+            if(!query || query.trim() === "") {
+                query = "华语";
+            }
+            stationsListDiv.innerHTML = `<div style="text-align:center; padding: 40px;"><span class="loading-indicator"></span> 搜索“${escapeHtml(query)}”电台中...</div>`;
+            resultCountSpan.innerText = "";
+            try {
+                const url = `${API_BASE}?name=${encodeURIComponent(query)}&limit=50&hidebroken=true&order=clickcount&reverse=true`;
+                const response = await fetch(url);
+                if(!response.ok) throw new Error(`HTTP ${response.status}`);
+                const stations = await response.json();
+                if(!stations || stations.length === 0) {
+                    stationsListDiv.innerHTML = `<div style="padding: 40px; text-align:center;"><i class="fas fa-exclamation-circle"></i> 未找到电台，试试其他关键词 (如 BBC, Classical, Jazz)</div>`;
+                    resultCountSpan.innerText = "0 个电台";
+                    return;
+                }
+                resultCountSpan.innerText = `✨ 找到 ${stations.length} 个电台`;
+                renderStationList(stations);
+                // 保存搜索关键词
+                localStorage.setItem('radio_last_search', query);
+            } catch(err) {
+                console.error(err);
+                stationsListDiv.innerHTML = `<div style="padding: 40px; text-align:center; color:#ff9f7c;"><i class="fas fa-wifi"></i> 网络错误或API超时，<br>请稍后重试<br><small>${err.message}</small></div>`;
+                setStatusMessage("搜索失败，请检查网络", true);
+            }
+        }
+
+        function renderStationList(stations) {
+            currentDisplayedStations = stations;
+            if(!stations.length) {
+                stationsListDiv.innerHTML = `<div style="padding: 30px; text-align:center;">暂无电台数据</div>`;
+                return;
+            }
+            let html = '';
+            stations.forEach((st, index) => {
+                let streamUrl = st.url_resolved || st.url;
+                if(!streamUrl) return;
+                let name = st.name || "未命名电台";
+                let country = st.country || "未知地区";
+                let tags = st.tags ? st.tags.split(',').slice(0,2).join(',') : "";
+                let bitrate = st.bitrate ? `${st.bitrate}kbps` : '';
+                let codec = st.codec || '';
+                let metaInfo = `${country} ${bitrate} ${codec}`.trim();
+                const isFav = isFavoriteUrl(streamUrl);
+
+                html += `
+                    <div class="station-card">
+                        <div class="station-info">
+                            <div class="station-name">
+                                <i class="fas fa-broadcast-tower"></i> ${escapeHtml(name)}
+                            </div>
+                            <div class="station-meta">
+                                <span><i class="fas fa-map-marker-alt"></i> ${escapeHtml(country)}</span>
+                                ${tags ? `<span class="station-tags"><i class="fas fa-tag"></i> ${escapeHtml(tags)}</span>` : ''}
+                                ${metaInfo ? `<span><i class="fas fa-chart-line"></i> ${escapeHtml(metaInfo)}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="action-btns">
+                            <button class="fav-btn ${isFav ? 'favorited' : ''}" data-index="${index}">
+                                <i class="${isFav ? 'fas' : 'far'} fa-heart"></i>
+                            </button>
+                            <button class="play-btn" data-url="${escapeHtml(streamUrl)}" data-name="${escapeHtml(name)}" data-country="${escapeHtml(country)}" data-tags="${escapeHtml(tags)}">
+                                <i class="fas fa-play"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            stationsListDiv.innerHTML = html;
+
+            // 绑定播放按钮
+            document.querySelectorAll('.play-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const url = btn.getAttribute('data-url');
+                    const name = btn.getAttribute('data-name');
+                    const country = btn.getAttribute('data-country');
+                    const tags = btn.getAttribute('data-tags');
+                    if(url) {
+                        playStation({ name, url, country, tags });
+                    }
+                });
+            });
+
+            // 绑定收藏按钮
+            document.querySelectorAll('.fav-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const index = parseInt(btn.getAttribute('data-index'));
+                    const station = currentDisplayedStations[index];
+                    if (station) {
+                        const url = station.url_resolved || station.url;
+                        const stationObj = {
+                            name: station.name,
+                            url: url,
+                            country: station.country,
+                            tags: station.tags,
+                            bitrate: station.bitrate,
+                            codec: station.codec
+                        };
+                        toggleFavorite(stationObj, btn);
+                    }
+                });
+            });
+        }
+
+        // 渲染收藏电台（视图）
+        function renderFavoriteStations() {
+            const favs = getFavorites();
+            currentDisplayedStations = favs; // 使数据结构统一（但缺少url_resolved, 直接用url）
+            if (favs.length === 0) {
+                stationsListDiv.innerHTML = `<div style="padding: 40px; text-align:center;"><i class="far fa-heart"></i> 收藏夹空空的，快去搜索并点击 ❤️ 收藏吧</div>`;
+                resultCountSpan.innerText = "";
+                return;
+            }
+            let html = '';
+            favs.forEach((st, index) => {
+                let streamUrl = st.url;
+                let name = st.name || "未命名";
+                let country = st.country || "";
+                let tags = st.tags || "";
+                let metaInfo = `${country}`.trim();
+                html += `
+                    <div class="station-card">
+                        <div class="station-info">
+                            <div class="station-name">
+                                <i class="fas fa-heart" style="color:#ff4d6d;"></i> ${escapeHtml(name)}
+                            </div>
+                            <div class="station-meta">
+                                ${country ? `<span><i class="fas fa-map-marker-alt"></i> ${escapeHtml(country)}</span>` : ''}
+                                ${tags ? `<span class="station-tags">${escapeHtml(tags)}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="action-btns">
+                            <button class="fav-btn favorited" data-index="${index}">
+                                <i class="fas fa-heart"></i>
+                            </button>
+                            <button class="play-btn" data-url="${escapeHtml(streamUrl)}" data-name="${escapeHtml(name)}" data-country="${escapeHtml(country)}" data-tags="${escapeHtml(tags)}">
+                                <i class="fas fa-play"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            stationsListDiv.innerHTML = html;
+            resultCountSpan.innerText = `❤️ ${favs.length} 个收藏电台`;
+
+            document.querySelectorAll('.play-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const url = btn.getAttribute('data-url');
+                    const name = btn.getAttribute('data-name');
+                    const country = btn.getAttribute('data-country');
+                    const tags = btn.getAttribute('data-tags');
+                    if(url) playStation({ name, url, country, tags });
+                });
+            });
+
+            document.querySelectorAll('.fav-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const index = parseInt(btn.getAttribute('data-index'));
+                    const station = currentDisplayedStations[index];
+                    if (station) {
+                        toggleFavorite(station, btn);
+                    }
+                });
+            });
+        }
+
+        // 视图切换
+        function switchToSearchView() {
+            currentView = 'search';
+            searchTabBtn.classList.add('active');
+            favoritesTabBtn.classList.remove('active');
+            searchArea.style.display = 'block';
+            // 恢复上次搜索或默认
+            const lastQuery = localStorage.getItem('radio_last_search') || '华语';
+            searchInput.value = lastQuery;
+            searchStations(lastQuery);
+        }
+
+        function switchToFavoritesView() {
+            currentView = 'favorites';
+            favoritesTabBtn.classList.add('active');
+            searchTabBtn.classList.remove('active');
+            searchArea.style.display = 'none';
+            renderFavoriteStations();
+        }
+
+        searchTabBtn.addEventListener('click', switchToSearchView);
+        favoritesTabBtn.addEventListener('click', switchToFavoritesView);
+
+        // 搜索按钮
+        searchBtn.addEventListener('click', () => {
+            if (currentView !== 'search') {
+                switchToSearchView();
+            }
+            let query = searchInput.value.trim();
+            if(query === "") query = "华语";
+            searchStations(query);
+        });
+
+        searchInput.addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') searchBtn.click();
+        });
+
+        manualUrlInput.addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') playManualUrl();
+        });
+
+        // ===================== 启动 =====================
+        window.addEventListener('load', () => {
+            // 默认搜索“华语”，或上次搜索词
+            const lastQuery = localStorage.getItem('radio_last_search') || '华语';
+            searchInput.value = lastQuery;
+            searchStations(lastQuery);
+            manualUrlInput.value = "https://stream.somafm.com/groovesalad256.mp3";
+            setStatusMessage("欢迎使用网络收音机，搜索全球电台或手动输入流地址", false);
+            // 默认增强关闭
+            userWantsEnhance = false;
+            enhanceActive = false;
+            toggleEnhanceUI(false);
+        });
+    })();
+</script>
+</body>
+</html>
